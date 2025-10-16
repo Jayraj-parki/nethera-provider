@@ -1,0 +1,42 @@
+@import "../../styles/_var";
+@import "../../styles/_mixins";
+
+.nav {
+  background: #fff;
+  .small{
+    font-size: $font-n;
+  }
+}
+
+.brand {
+  color: $primary-color 
+}
+
+.link {
+  color: #333;
+  transition: background 0.15s, color 0.15s;
+  font-size: $font-n;
+  i { color: #4b0082; } // icon indigo
+  &:hover { background: #f6f2ff; color: $primary-color  }
+}
+
+.active_links {
+  background: $primary-color ;
+  color: #fff !important;
+
+  i { color: #fff; }
+  &:hover { background: $primary-color-soft ; color: #fff; }
+}
+
+.avatar {
+  width: 34px; height: 34px;
+  border-radius: 50%;
+  background: $primary-color ;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.logout {
+  text-decoration: none;
+}

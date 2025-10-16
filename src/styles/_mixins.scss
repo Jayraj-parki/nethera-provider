@@ -1,0 +1,73 @@
+// _mixins.scss
+@import './var';
+@mixin button-style($bg-color, $text-color) {
+  background-color: $bg-color;
+  color: $text-color;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+
+  &:hover {
+    opacity: 0.85;
+    background-color: darken($bg-color, 5%);
+    color: $text-color;
+  }
+}
+
+@mixin card-shadow {
+  box-shadow: $shadow-sm;
+}
+@mixin rounded-card {
+  border-radius: $card-radius;
+}
+@mixin rating-chip {
+  background: #f3f7ff;
+  color: $primary-color;
+  border-radius: 0.8em;
+  padding: 0.3em 0.8em;
+  font-weight: 600;
+  font-size: 0.95em;
+}
+@mixin mini-badge($bg) {
+  background: $bg;
+  color: #fff;
+  font-size: 0.85em;
+  padding: 0.12em 0.5em;
+  border-radius: 0.7em;
+}
+
+@mixin card {
+  background: $secondary-color;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  border: 1px solid $border_color;
+}
+
+@mixin btn-primary { 
+  background: $primary-color;
+  color: $secondary-color;
+  border-radius: $radius-md;
+  font-weight: 600;
+  padding: 0.7em 2.2em;
+  border: none;
+  transition: background 0.16s;
+  &:hover {
+    background: darken($primary-color, 8%);
+  }
+}
+
+@mixin btn-primary-disabled { 
+  background: $gray-dark;
+  color: $gray-light;
+  border-radius: $radius-md;
+  font-weight: 600;
+  padding: 0.7em 2.2em;
+  border: none;
+  transition: background 0.16s;
+  &:hover {
+    background: $gray-dark;
+  }
+}

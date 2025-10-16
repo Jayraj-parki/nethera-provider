@@ -1,0 +1,78 @@
+@import "../../styles/_var";
+@import "../../styles/_mixins";
+
+.sub_title{
+  font-size: smaller;
+}
+
+.statCard {
+  .title {
+    font-size: $font-sm;
+  }
+  .statValue {
+    font-size: $font-n;
+  }
+}
+
+.actionCard{
+  font-size: $font-sm;
+  .title{
+    font-size: $font-sm;
+  }
+  &:hover{
+    box-shadow: $shadow-md
+  }
+}
+
+.actionIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  // color: #fff;
+
+  &.bg-purple {
+    background: #6e2faf;
+  }
+  &.bg-blue {
+    background: #2962ff;
+  }
+  &.bg-pink {
+    background: #ff2d87;
+  }
+}
+
+.view_all{
+  font-size: $font-n;
+  &:hover{
+    background-color: $text-color-soft;
+    color: $color-light;
+  }
+}
+.busItem {
+  font-size: $font-n;
+}
+
+.task {
+  font-size: $font-sm;
+   background: #fff1f1;
+    border-color: #ffe0e0;
+
+  i {
+    display: inline;
+    color: $primary-color;
+  }
+  &:hover{
+    box-shadow: $shadow-md
+  }
+}
+.taskWarning {
+    background: #fff1f1;
+    border-color: #ffe0e0;
+  }
+
+.text-pink {
+  color: #ff2d87 !important;
+}

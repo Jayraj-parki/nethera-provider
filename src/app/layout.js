@@ -4,7 +4,8 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-// import Navbar from '@/components/common/Navbar';
+import OperatorNavbar from '@/components/common/OperatorNavbar';
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -21,7 +22,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <main>
-          {/* <Navbar /> */}
+          <OperatorNavbar />
           {children}
         </main>
       </body>
