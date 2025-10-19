@@ -6,15 +6,6 @@ import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { getPathByLevel } from "@/utils/navigation_path";
 import { urls } from "@/utils/constants";
-const items = [
-  { href: "#/operator/dashboard", icon: "bi-grid", label: "Dashboard", pill: true },
-  { href: "#/operator/add-bus", icon: "bi-plus-lg", label: "Add Bus" },
-  { href: "#/operator/buses", icon: "bi-bus-front", label: "Bus Management" },
-  { href: "#/operator/routes", icon: "bi-diagram-3", label: "Route Management" },
-  { href: "#/operator/drivers", icon: "bi-person-lines-fill", label: "Driver Management" },
-  { href: "#/operator/cancelled", icon: "bi-ticket-detailed", label: "Cancelled Tickets" },
-  { href: "#/operator/offers", icon: "bi-tag", label: "Offer Management" },
-];
 
 export default function OperatorNavbar() {
   const [collapse, setCollapse] = useState(true);
@@ -22,8 +13,11 @@ export default function OperatorNavbar() {
 
   const url = usePathname()
   useEffect(() => {
-    setActiveLink(getPathByLevel(url, 1))
+    setActiveLink(getPathByLevel(url, 2))
+    console.log("activeLink:",activeLink)
   }, [url])
+ 
+
 
   return (
     <nav className={`${style.nav} navbar navbar-expand-lg border-bottom`}>
@@ -52,17 +46,17 @@ export default function OperatorNavbar() {
         <div className={`collapse navbar-collapse ${!collapse ? "show" : ""}`}>
           {/* Main links */}
           <ul className="navbar-nav me-auto align-items-center gap-1 gap-lg-2">
-            {urls.map((it) => (
-              <li className="nav-item" key={it.label}>
+            {urls?.map((it) => (
+              <li className="nav-item" key={it?.label}>
                 <Link
-                  className={`${style.link} ${activeLink == it.href && style.active_links}  nav-link d-flex align-items-center rounded-3 gap-2 p-2 ${
-                    it.pill ? style.pill : ""
+                  className={`${style.link} ${activeLink == it?.href && style.active_links}  nav-link d-flex align-items-center rounded-3 gap-2 p-2 ${
+                    it?.pill ? style.pill : ""
                   }`}
-                  href={it.href}
-                  onClick={() => setActiveLink(it.href)}
+                  href={it?.href}
+                  onClick={() => setActiveLink(it?.href)}
                 >
-                  <i className={`bi ${it.icon}`}></i>
-                  <span>{it.label}</span>
+                  <i className={`bi ${it?.icon}`}></i>
+                  <span>{it?.label}</span>
                 </Link>
               </li>
             ))}

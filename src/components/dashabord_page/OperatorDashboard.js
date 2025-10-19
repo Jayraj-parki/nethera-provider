@@ -1,4 +1,5 @@
 "use client";
+import { nav_links } from "@/utils/constants";
 import style from "./operatorDashboard.module.scss";
 import Link from "next/link";
 
@@ -25,36 +26,43 @@ export default function OperatorDashboard() {
         "title": "Add New Bus",
         "sub_title": "Register a new bus to your fleet",
         "bg_color": "bg-primary",
-        "icon": "bi bi-plus-lg "
+        "icon": "bi bi-plus-lg ",
+        "nav_link": nav_links['add-bus']
     }, {
         "title": "Manage Buses",
         "sub_title": "View and manage existing buses",
         "bg_color": "bg-info",
-        "icon": "bi bi-bus-front  "
+        "icon": "bi bi-bus-front  ",
+        "nav_link": nav_links['buses']
     }, {
         "title": "Process Refunds",
         "sub_title": "1 pending refunds",
         "bg_color": "bg-warning",
-        "icon": "bi bi-ticket-perforated  "
+        "icon": "bi bi-ticket-perforated  ",
+        "nav_link": nav_links['cancelled']
     }, {
         "title": "Create Offers",
         "sub_title": "Add promotional offers",
         "bg_color": "bg-success",
-        "icon": "bi bi-tag  "
+        "icon": "bi bi-tag  ",
+        "nav_link": nav_links['offers']
     }]
 
     const pending_task = [{
         "title": "Process Refunds",
         "sub_title": "1 tickets awaiting refund",
-        "icon": "bi bi-ticket-perforated"
+        "icon": "bi bi-ticket-perforated",
+        "nav_link": nav_links['cancelled']
     }, {
         "title": "Update Routes",
         "sub_title": "Review and update route information",
-        "icon": "bi bi-diagram-3"
+        "icon": "bi bi-diagram-3",
+        "nav_link": nav_links['routes']
     }, {
         "title": "Active Offers",
         "sub_title": "1 offers currently running",
-        "icon": "bi bi-tag"
+        "icon": "bi bi-tag",
+        "nav_link": nav_links['offers']
     }]
     return (
         <div className="container py-4">
@@ -66,7 +74,7 @@ export default function OperatorDashboard() {
                 </div>
                 <div className="text-muted small d-flex align-items-center gap-2">
                     <i className="bi bi-calendar3"></i>
-                    <span>12/10/2025</span>
+                    <span>12025</span>
                 </div>
             </div>
 
@@ -91,7 +99,7 @@ export default function OperatorDashboard() {
             <h5 className="mb-2">Quick Actions</h5>
             <div className="row g-3 mb-4">
                 {quick_operations?.map((val) => (
-                    <Link href="#" key={val?.title} className={`col-3 ${style.quick_action}`}>
+                    <Link href={val?.nav_link} key={val?.title} className={`col-3 ${style.quick_action}`}>
                         <div className={style.actionCard + ' bg-white border rounded-3 p-3 d-flex align-items-center gap-2'}>
                             <div className={`${style.actionIcon} ${val?.bg_color} rounded-3 me-1 d-inline-flex align-items-center justify-content-center `}>
                                 <i className={`${val?.icon} text-white`}></i>
@@ -113,7 +121,7 @@ export default function OperatorDashboard() {
                     <div className={style.panel + " border border rounded-3 p-3 bg-white "}>
                         <div className="d-flex align-items-center justify-content-between mb-3">
                             <h6 className="m-0">Active Buses</h6>
-                            <Link href="#" className={`${style.view_all} border p-1 px-2 rounded-3 text-decoration-none`}>View All</Link>
+                            <Link href={nav_links['buses']} className={`${style.view_all} border p-1 px-2 rounded-3 text-decoration-none`}>View All</Link>
                         </div>
                         <div className={style.busItem + ' d-flex justify-content-between align-items-center p-2  rounded bg-light '}>
                             <div className="d-flex align-items-center gap-2 ">
@@ -137,7 +145,7 @@ export default function OperatorDashboard() {
                         {
 
                             pending_task?.map((val) => (
-                                <Link href={'#'} key={val?.title}  className={` ${style.task}   rounded-3 d-flex justify-content-between align-items-center mb-3  p-2 ${val?.title.includes("Refund")?style.taskWarning :' bg-light'}`}>
+                                <Link href={val?.nav_link} key={val?.title} className={` ${style.task}   rounded-3 d-flex justify-content-between align-items-center mb-3  p-2 ${val?.title.includes("Refund") ? style.taskWarning : ' bg-light'}`}>
                                     <div className="d-flex align-items-center gap-2">
                                         <i className={val?.icon}></i>
                                         <div>

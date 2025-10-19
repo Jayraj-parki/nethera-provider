@@ -1,0 +1,69 @@
+/* KPIs */
+.statCard {
+  background: #fff;
+  border: 1px solid #f0edf9;
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 2px 12px rgba(110, 47, 175, 0.06);
+}
+.statValue { font-size: 1.6rem; font-weight: 700; margin-top: .25rem; }
+
+/* Search */
+.searchWrap {
+  background: #fff;
+  border: 1px solid #eee8fb;
+  border-radius: .8rem;
+  padding: .2rem .4rem;
+}
+
+/* Card */
+.card {
+  background: #fff;
+  border: 1px solid #f1ecfb;
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 2px 12px rgba(110, 47, 175, 0.06);
+}
+
+.avatar {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: #4b0082; color: #fff; display: inline-flex;
+  align-items: center; justify-content: center; font-weight: 700;
+}
+
+.avatarLg {
+  width: 46px; height: 46px; border-radius: 50%;
+  background: #4b0082; color: #fff; display: inline-flex;
+  align-items: center; justify-content: center; font-weight: 700;
+  font-size: 1.05rem;
+}
+
+.badge {
+  display: inline-block; padding: .15rem .5rem; border-radius: .8rem;
+  font-size: .75rem; border: 1px solid #ece6ff;
+}
+.bg-purple { background: #6e2faf; }
+
+/* Panel (forms) */
+.panel {
+  background: #fff; border: 1px solid #f0edf9; border-radius: 1rem;
+  padding: 1rem 1.1rem; box-shadow: 0 2px 12px rgba(110,47,175,0.06);
+}
+
+/* Modal */
+.modalOverlay {
+  position: fixed; inset: 0; background: rgba(35,20,60,.07);
+  display: flex; align-items: center; justify-content: center; z-index: 1050;
+}
+.modalDialog {
+  background: #fff; border-radius: 1.1rem; box-shadow: 0 8px 32px rgba(110,47,175,.14);
+  width: 95vw; max-width: 720px; padding: 1.2rem 1.1rem; position: relative;
+}
+.modalClose {
+  position: absolute; top: .8rem; right: .8rem; background: transparent; border: none; color: #6e2faf;
+  font-size: 1.1rem;
+}
+
+/* react-select tweaks */
+.react-select__control { border-radius: .7rem !important; }
+.react-select__single-value { font-weight: 500; }

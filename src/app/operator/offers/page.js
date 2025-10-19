@@ -1,11 +1,12 @@
-import OperatorDashboard from "@/components/dashabord_page/OperatorDashboard";
+
+import OfferManagement from "@/components/offers_page/OfferManagement";
 
 
 export default function HomePage() {
   return (
     <>
       <main className="container rows mx-auto col-12 col-lg-10 mt-lg-4 mt-2">
-      <h1 className="text-center">Landing page here...</h1>
+        <OfferManagement/>
       </main>
     </>
   );

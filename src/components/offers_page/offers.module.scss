@@ -1,0 +1,81 @@
+@import "../../styles/_var";
+@import "../../styles/_mixins";
+
+.panel {
+  background: #fff;
+  border: 1px solid #f0edf9;
+  border-radius: 1rem;
+  padding: 1rem 1.1rem;
+  box-shadow: 0 2px 12px rgba(110, 47, 175, 0.06);
+}
+
+.searchWrap {
+  background: #fff;
+  border: 1px solid #eee8fb;
+  border-radius: 0.8rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.routePicker {
+  background: #fff;
+  min-height: 48px;
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: center;
+  gap: 0.25rem;
+  border-radius: 0.6rem;
+}
+/* Row: two date fields side-by-side */
+.datesRow {
+  display: grid;
+  grid-template-columns: 1fr; /* mobile */
+  gap: 1rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 1fr; /* md+ two columns */
+    align-items: start;
+  }
+}
+/* Ensure wrapper controls layout and icon overlays input area */
+.datePickerWrap {
+  position: relative;
+  display: block;
+
+  :global(.react-datepicker-wrapper),
+  :global(.react-datepicker__input-container) {
+    display: block;
+    width: 100%;
+  }
+
+  :global(.react-datepicker__input-container input) {
+    width: 100%;
+    min-height: 42px;
+    line-height: 42px; /* vertically centers text */
+    padding-right: 2rem; /* leave room for icon */
+  }
+
+  .calIcon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%); /* pin inside input vertically */
+    color: #6e2faf;
+    pointer-events: none;
+  }
+}
+
+/* Popper above everything */
+.popper {
+  z-index: 9999;
+}
+.calendar {
+  border-radius: 0.8rem !important;
+  box-shadow: 0 8px 24px rgba(20, 20, 40, 0.12);
+}
+
+/* Optional: tighten input height like booking form */
+.react-datepicker-wrapper,
+.react-datepicker__input-container input {
+  width: 100%;
+}
+
