@@ -1,0 +1,141 @@
+### 2.4 Create Trip (Single or Recurring)
+- **POST** `/buses/create_trip/`
+- **Purpose:** Create one trip by default, or create recurring trips when `is_recurring_trip` is enabled from UI checkbox.
+
+- **Request (Single Trip):**
+  ```json
+  {
+    "bus_id": 1,
+    "route_id": 2,
+    "stop_times": [
+      { 
+        "stop_id": 101,
+        "arrival_time": "2026-03-20T08:00:00Z",
+        "departure_time": "2026-03-20T08:10:00Z"
+      },
+      {
+        "stop_id": 102,
+        "arrival_time": "2026-03-20T09:05:00Z",
+        "departure_time": "2026-03-20T09:15:00Z"
+      },
+      {
+        "stop_id": 103,
+        "arrival_time": "2026-03-20T12:00:00Z",
+        "departure_time": "2026-03-20T12:00:00Z"
+      }
+    ],
+    "discount": "10%"
+  }
+  ```
+
+- **Response (Single Trip):**
+  ```json
+  {
+    "trip_id": 123,
+    "price": 950.0,
+    "message": "Trip created with stop times and segments generated."
+  }
+  ```
+
+- **Request (Recurring Trips via Checkbox):**
+  ```json
+  {
+    "is_recurring_trip": true,
+    "bus_id": 1,
+    "route_id": 2,
+    "stop_times": [
+      {
+        "stop_id": 101,
+        "arrival_time": "08:00:00",
+        "departure_time": "08:10:00"
+      },
+      {
+        "stop_id": 102,
+        "arrival_time": "09:05:00",
+        "departure_time": "09:15:00"
+      },
+      {
+        "stop_id": 103,
+        "arrival_time": "12:00:00",
+        "departure_time": "12:00:00"
+      }
+    ],
+    "start_date": "2026-03-20",
+    "end_date": "2026-06-30",
+    "recurrence_type": "monthly",
+    "day_of_month": 31,
+    "discount": "10%"
+  }
+  ```
+
+- **Recurring Mode Contract:**
+  - `recurrence_type = "daily"`
+    - Required: `start_date`, `end_date`
+    - Not required: `days_of_week`, `day_of_month`, `custom_dates`
+  - `recurrence_type = "weekly"`
+    - Required: `start_date`, `end_date`, `days_of_week`
+    - `days_of_week` format: comma-separated values from `0` to `6` (`0=Monday`, `6=Sunday`)
+  - `recurrence_type = "monthly"`
+    - Required: `start_date`, `end_date`, `day_of_month`
+    - `day_of_month` allowed range: `1` to `31`
+    - Edge-case handling for short months: if selected day is not available in a month, system uses that month's last day.
+      - Example: `31` -> `30` in April, `29` in Feb (leap year), `28` in Feb (non-leap year)
+  - `recurrence_type = "custom"`
+    - Required: `custom_dates` (array of exact dates)
+    - `start_date` and `end_date` are auto-derived from min/max of `custom_dates`
+    - Not required: `days_of_week`, `day_of_month`
+
+- **Request (Custom Recurrence Example):**
+  ```json
+  {
+    "is_recurring_trip": true,
+    "bus_id": 1,
+    "route_id": 2,
+    "stop_times": [
+      {
+        "stop_id": 101,
+        "arrival_time": "08:00:00",
+        "departure_time": "08:10:00"
+      },
+      {
+        "stop_id": 102,
+        "arrival_time": "09:05:00",
+        "departure_time": "09:15:00"
+      },
+      {
+        "stop_id": 103,
+        "arrival_time": "12:00:00",
+        "departure_time": "12:00:00"
+      }
+    ],
+    "recurrence_type": "custom",
+    "custom_dates": ["2026-04-05", "2026-04-12", "2026-04-20"],
+    "discount": "10%"
+  }
+  ```
+
+- **Response (Recurring Trips):**
+  ```json
+  {
+    "template_id": 10,
+    "recurrence_id": 5,
+    "created_trip_ids": [201, 202, 203],
+    "count": 3,
+    "message": "3 trips created for template."
+  }
+  ```
+
+- **Logic:**
+  - Preferred input is `stop_times`, containing every stop on the selected route exactly once in route order.
+  - Each created trip now stores those values in `TripStopTime`.
+  - Each created trip auto-generates `TripStopSegment` rows for consecutive stop pairs using stop-wise departure/arrival times.
+  - Recurring mode supports overnight trips by rolling times into the next day when later stops pass midnight.
+  - `stop_times` is mandatory. If it is missing, the API returns a validation error and no trip is created.
+  - Recurrence values allowed: `daily`, `weekly`, `monthly`, `custom`.
+  - For `monthly`, UI should always ask the user for `day_of_month`.
+
+### 2.5 Backward-Compatible Recurring Endpoint
+- **POST** `/buses/create_recurring_trips/`
+- **Purpose:** Legacy endpoint retained for compatibility. Internally uses the same recurring creation logic as `/buses/create_trip/` with `is_recurring_trip=true`.
+
+---

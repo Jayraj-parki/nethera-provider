@@ -10,46 +10,114 @@ import styles from "./buses.module.scss";
 import SeatGrid from "./SeatGrid.js";
 import Link from "next/link";
 import { nav_links } from "@/utils/constants";
-
+import { createBus } from "@/services/busService";
 const routesMock = [{ id: "r1", name: "Mumbai-Delhi Express (Mumbai → Delhi)" }];
-const driversMock = [
-    { id: "d1", name: "Rajesh Kumar", license: "DL123456789" },
-    { id: "d2", name: "Suresh Patel", license: "DL987654321" },
-];
-
+import { fetchDrivers } from "@/services/driverService";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { addBus } from "@/store/busSlice";
+import { useDispatch } from "react-redux";
+import TimeField from "../common/TimeField";
 export default function AddBusInline() {
+    const router = useRouter();
+    const dispatch = useDispatch()
     const [form, setForm] = useState({
         number: "",
-        totalSeats: 40,
         type: "Sleeper",
-        status: "Active",
-
-        routeId: "",
-        startDate: null, // Date object
-        departure: "",
-
+        totalSeats: "",
         driverId: "",
-        pricePerKm: 1,
-
+        routeId: "",
+        pricePerKm: "",
+        departure: "",
+        startDate: null,
+        status: "Active",
+        amenities: [],
         agentSeats: [],
     });
-    const handleSubmit = (payload) => {
-        console.log(payload)
-    }
-    const addBus = () => {
-        const payload = {
-            ...form,
-            routeName: routesMock.find((r) => r.id === form.routeId)?.name || "",
-            driverDisplay:
-                driversMock.find((d) => d.id === form.driverId)?.name +
-                " (" +
-                (driversMock.find((d) => d.id === form.driverId)?.license || "") +
-                ")" || "",
-            startDateText: form.startDate ? format(form.startDate, "dd-MM-yyyy") : "",
-        };
-        handleSubmit(payload);
-    };
+    const AMENITIES_OPTIONS = [
+        "WiFi",
+        "Charging Point",
+        "Water Bottle",
+        "Blanket",
+        "CCTV",
+        "TV",
+        "Emergency Exit",
+        "AC",
+    ];
+    const [drivers, setDrivers] = useState([]);
+    function generateSeats(totalSeats, seat_type) {
+        const seats = [];
 
+        for (let i = 1; i <= totalSeats; i++) {
+            seats.push({
+                seat_number: `S${i}`,
+                seat_type: 'Window',
+            });
+        }
+
+        return seats;
+    }
+
+    const handleSubmit = async () => {
+        if (form.amenities.length === 0) {
+            alert("Please select at least one amenity");
+            return;
+        }
+        const seats = generateSeats(form.totalSeats, form.type);
+
+        try {
+            const apiPayload = {
+                operator: 1,
+                bus_number: form.number,
+                type: form.type,
+                total_seats: form.totalSeats,
+                amenities: "",
+                status: form.status.toLowerCase(),
+                start_date: form.startDate
+                    ? format(form.startDate, "yyyy-MM-dd")
+                    : null,
+                price_per_km: form.pricePerKm,
+                departure_time: form.departure,
+                driver: form.driverId,
+                assigned_for_trip: false,
+                amenities: form.amenities.join(", "),
+
+                // seats: form.agentSeats.map((seat) => ({
+                //     seat_number: seat,
+                //     seat_type: "Seater",
+                // })),
+                seats: seats
+            };
+
+            const res = await dispatch(addBus(apiPayload)).unwrap();
+            
+            alert("Bus created successfully");
+            router.push(nav_links['buses']);
+
+        } catch (err) {
+
+            alert(JSON.stringify(err.data));
+        }
+    };
+    useEffect(() => {
+        loadDrivers();
+    }, []);
+
+    const loadDrivers = async () => {
+        try {
+            const data = await fetchDrivers();
+
+            const mapped = data.map((d) => ({
+                id: d.id,
+                name: d.name,
+                license: d.license_number,
+            }));
+
+            setDrivers(mapped);
+        } catch (err) {
+            console.error("Failed to load drivers", err);
+        }
+    };
     return (
         <div className="container py-4">
             <div className="d-flex align-items-center gap-2 mb-3">
@@ -109,6 +177,44 @@ export default function AddBusInline() {
                             <option>Inactive</option>
                         </select>
                     </div>
+                    <div className="col-12">
+                        <label className="form-label fw-semibold">Amenities</label>
+
+                        <div className="row g-2">
+                            {AMENITIES_OPTIONS.map((item) => (
+                                <div key={item} className="col-md-3 col-6">
+                                    <div className="form-check">
+                                        <input
+                                            type="checkbox"
+                                            className="form-check-input"
+                                            id={`amenity-${item}`}
+                                            checked={form.amenities.includes(item)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setForm({
+                                                        ...form,
+                                                        amenities: [...form.amenities, item],
+                                                    });
+                                                } else {
+                                                    setForm({
+                                                        ...form,
+                                                        amenities: form.amenities.filter((a) => a !== item),
+                                                    });
+                                                }
+                                            }}
+                                        />
+
+                                        <label
+                                            className="form-check-label"
+                                            htmlFor={`amenity-${item}`}
+                                        >
+                                            {item}
+                                        </label>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             </section>
 
@@ -116,10 +222,10 @@ export default function AddBusInline() {
             <section className={styles.panel + " mb-3"}>
                 <div className="d-flex align-items-center gap-2 mb-2">
                     <i className="bi bi-diagram-3 text-primary"></i>
-                    <div className="fw-semibold">Route and Schedule</div>
+                    <div className="fw-semibold"> Schedule</div>
                 </div>
                 <div className="row g-3">
-                    <div className="col-md-6">
+                    {/* <div className="col-md-6">
                         <label className="form-label small">Route *</label>
                         <select
                             className="form-select shadow-none outline-0"
@@ -150,15 +256,22 @@ export default function AddBusInline() {
                             />
                             <i className={`bi bi-calendar3 ${styles.calIcon}`}></i>
                         </div>
-                    </div>
+                    </div> */}
 
                     <div className="col-md-6">
                         <label className="form-label small">Departure Time *</label>
-                        <input
+                        {/* <input
                             className="form-control shadow-none outline-0"
                             placeholder="--:--"
                             value={form.departure}
                             onChange={(e) => setForm({ ...form, departure: e.target.value })}
+                        /> */}
+                        <TimeField
+                            label="Departure Time *"
+                            value={form.departure}
+                            onChange={(norm) => setForm({ ...form, departure: norm })}
+                            stepSeconds={60}
+                            required={true}
                         />
                     </div>
                 </div>
@@ -179,7 +292,7 @@ export default function AddBusInline() {
                             onChange={(e) => setForm({ ...form, driverId: e.target.value })}
                         >
                             <option value="">Select a driver</option>
-                            {driversMock.map((d) => (
+                            {drivers.map((d) => (
                                 <option key={d.id} value={d.id}>
                                     {d.name} ({d.license})
                                 </option>
@@ -233,7 +346,7 @@ export default function AddBusInline() {
                     <Link href={nav_links['buses']} className="btn btn-outline-secondary">
                         Cancel
                     </Link>
-                    <button className="btn btn-primary" onClick={addBus}>
+                    <button className="btn btn-primary" onClick={handleSubmit}>
                         Add Bus
                     </button>
                 </div>

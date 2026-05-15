@@ -1,18 +1,21 @@
 "use client";
-
+import Logo from '../../../public/vercel.svg'
+import Image from "next/image";
 import styles from "./driver.module.scss";
 
-export default function DriverCard({ driver, onView, onAssign, onEdit }) {
+export default function DriverCard({ driver, onView, onAssign, onEdit,onDelete }) {
   return (
     <div className={styles.card}>
       <div className="d-flex align-items-start justify-content-between">
         <div className="d-flex align-items-center gap-2">
-          <div className={styles.avatar}>{driver.avatarInitial}</div>
+          <div className={styles.avatar}>
+            {/* <Image src={driver.image || Logo} alt='logo' width={100} height={100}/> */}
+          </div>
           <div>
             <div className="fw-semibold">{driver.name}</div>
             <div className="d-flex align-items-center gap-1">
-              <span className={styles.badge + " bg-success-subtle text-success"}>Active</span>
-              <span className={styles.badge + " bg-purple text-white"}>{driver.level}</span>
+              <span className={styles.badge + ` bg-success-subtle text-capitalize ${driver?.status?.toLowerCase() != 'inactive' ? 'text-success':'text-danger'} `}>{driver?.status}</span>
+              <span className={styles.badge + " bg-purple text-dark"}>EXP:{driver.level}5</span>
             </div>
           </div>
         </div>
@@ -20,7 +23,7 @@ export default function DriverCard({ driver, onView, onAssign, onEdit }) {
           <button className="btn btn-light btn-sm" title="Edit" onClick={onEdit}>
             <i className="bi bi-pencil-square"></i>
           </button>
-          <button className="btn btn-light btn-sm" title="Suspend" onClick={() => alert("Suspend action (UI stub)")}>
+          <button className="btn btn-light btn-sm" title="Suspend" onClick={onDelete}>
             <i className="bi bi-person-dash"></i>
           </button>
         </div>

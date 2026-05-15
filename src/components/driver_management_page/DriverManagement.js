@@ -1,35 +1,15 @@
 "use client";
 import Select from "react-select";
 import styles from "./driver.module.scss";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import DriverCard from "./DriverCard.js";
 import DriverForm from "./DriverForm.js";
 import DriverDetailsModal from "./DriverDetailsModal.js";
-
-const MOCK = [
-    {
-        id: 1,
-        name: "Rajesh Kumar",
-        status: "Active",
-        level: "Expert",
-        license: "DL123456789",
-        phone: "+91 9876543210",
-        email: "rajesh@example.com",
-        experienceYears: 8,
-        avatarInitial: "R",
-    },
-    {
-        id: 2,
-        name: "Suresh Patel",
-        status: "Active",
-        level: "Expert",
-        license: "DL987654321",
-        phone: "+91 9876543211",
-        email: "suresh@example.com",
-        experienceYears: 12,
-        avatarInitial: "S",
-    },
-];
+// import { createDriver, deleteDriver, fetchDrivers, updateDriver } from "@/services/driverService";
+import { selectOperatorAuth } from "@/store/operatorAuthSlice";
+import { OP_BEARER_TOKEN } from "@/utils/constants";
+import { addDriver, editDriver, fetchDrivers, removeDriver } from "@/store/busSlice";
 
 const statusOptions = [
     { value: "ALL", label: "All Status" },
@@ -38,15 +18,44 @@ const statusOptions = [
 ];
 
 export default function DriverManagement() {
-    const [drivers, setDrivers] = useState(MOCK);
-    const [mode, setMode] = useState("list"); // list | create | edit | view
+    const { token } = useSelector(selectOperatorAuth);
+    const dispatch = useDispatch();
+
+    const [drivers, setDrivers] = useState([]);
+    const [mode, setMode] = useState("list");
     const [current, setCurrent] = useState(null);
     const [q, setQ] = useState("");
     const [status, setStatus] = useState(statusOptions[0]);
 
+    const [loading, setLoading] = useState(false);
+    const [error, setError] = useState("");
+
+    useEffect(() => {
+        loadDrivers();
+    }, []);
+    const normalizeDrivers = (list) =>
+        list.map((d) => ({
+            ...d,
+            _id: d.id  ?? d.uuid ?? (d.license && d.phone ? `${d.license}-${d.phone}` : crypto.randomUUID()),
+        }));
+
+    const loadDrivers = async () => {
+        setLoading(true);
+        setError("");
+        try {
+            const data = await dispatch(fetchDrivers()).unwrap();
+            const list = Array.isArray(data) ? data : data?.results || [];
+            setDrivers(normalizeDrivers(list));
+        } catch (err) {
+            setError(err?.message || "Failed to load drivers");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const kpis = useMemo(() => {
         const total = drivers.length;
-        const active = drivers.filter((d) => d.status === "Active").length;
+        const active = drivers.filter((d) => d.status === "active" || d.status === "Active").length;
         const avgExp =
             Math.round(
                 (drivers.reduce((a, b) => a + (b.experienceYears || 0), 0) / Math.max(1, total)) * 10
@@ -55,8 +64,10 @@ export default function DriverManagement() {
     }, [drivers]);
 
     const filtered = drivers.filter((d) => {
-        const s = status.value === "ALL" || d.status === status.value;
-        const text = `${d.name} ${d.license} ${d.phone} ${d.email}`.toLowerCase();
+        const s =
+            status.value === "ALL" ||
+            String(d.status).toLowerCase() === status.value.toLowerCase();
+        const text = `${d.name || ""} ${d.license || ""} ${d.phone || ""} ${d.email || ""}`.toLowerCase();
         return s && text.includes(q.toLowerCase());
     });
 
@@ -65,8 +76,13 @@ export default function DriverManagement() {
         setMode("create");
     };
 
-    const openView = (d) => {
-        setCurrent(d);
+    const openView = (driverFromApi) => {
+        setCurrent({
+            ...driverFromApi,
+            image_url: driverFromApi.image || "",         // show existing image
+            document_url: driverFromApi.document || "",   // show existing document
+            license: driverFromApi.license_number,        // normalize for the form
+        });
         setMode("view");
     };
 
@@ -75,20 +91,89 @@ export default function DriverManagement() {
         setMode("edit");
     };
 
-    const onCreate = (data) => {
-        const next = { ...data, id: Math.max(...drivers.map((x) => x.id)) + 1, avatarInitial: data.name?.[0] || "D" };
-        setDrivers([next, ...drivers]);
-        setMode("list");
+    const onCreate = async (formPayload) => {
+        setLoading(true);
+        setError("");
+
+        try {
+            // Build FormData
+            const fd = new FormData();
+            fd.append("name", formPayload.name);
+            fd.append("phone", formPayload.phone);
+            fd.append("email", formPayload.email);
+            fd.append("address", formPayload.address);
+            fd.append("dob", formPayload.dob || "");
+            fd.append("license_number", formPayload.license);
+            fd.append("license_expiry", formPayload.license_expiry || "");
+            fd.append("id_proof_type", formPayload.id_proof_type);
+            fd.append("id_number", formPayload.id_number);
+            fd.append("status", formPayload.status);
+            // optional: experienceYears not in your API schema, add if your backend accepts
+            // fd.append("experience_years", formPayload.experienceYears || 0);
+
+            if (formPayload.image) fd.append("image", formPayload.image);
+            if (formPayload.document) fd.append("document", formPayload.document);
+
+            const created = await dispatch(addDriver(fd)).unwrap();
+            const withId = {
+                ...created,
+                _id: created.id ?? created._id ?? created.uuid ?? crypto.randomUUID(),
+            };
+            setDrivers((prev) => [withId, ...prev]);
+            setMode("list");
+        } catch (err) {
+            setError(err?.message || "Failed to add driver");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const onUpdate = (data) => {
-        setDrivers(drivers.map((d) => (d.id === data.id ? { ...d, ...data } : d)));
-        setMode("list");
+    const onUpdate = async (payload) => {
+        setLoading(true); setError("");
+        try {
+            const fd = new FormData();
+            // only append fields that changed (or just send all scalars; PATCH will update)
+            fd.append("name", payload.name);
+            fd.append("phone", payload.phone);
+            fd.append("email", payload.email);
+            fd.append("address", payload.address);
+            fd.append("dob", payload.dob || "");
+            fd.append("license_number", payload.license);
+            fd.append("license_expiry", payload.license_expiry || "");
+            fd.append("id_proof_type", payload.id_proof_type);
+            fd.append("id_number", payload.id_number);
+            fd.append("status", payload.status);
+
+            // files: append only if replaced
+            if (payload.image) fd.append("image", payload.image);
+            if (payload.document) fd.append("document", payload.document);
+
+            const updated = await dispatch(editDriver({ id: payload.id, formData: fd })).unwrap();
+            setDrivers((prev) => prev.map((d) => (d.id === payload.id ? { ...d, ...updated } : d)));
+            setMode("list");
+        } catch (err) {
+            setError(err?.message || "Failed to update driver");
+        } finally {
+            setLoading(false);
+        }
     };
+     const onDelete = async (payload) => {
+        setLoading(true); setError("");
+        try {
+            
+            const updated = await dispatch(removeDriver(payload.id )).unwrap();
+             setDrivers((prev) => prev.filter((d) => d._id !== payload.id));
+            setMode("list");
+        } catch (err) {
+            setError(err?.message || "Failed to Delete driver");
+        } finally {
+            setLoading(false);
+        }
+    };
+
 
     return (
         <div className="container py-4">
-            {/* Header + Add */}
             <div className="d-flex align-items-center justify-content-between mb-3">
                 <div>
                     <h4 className="mb-1">Driver Management</h4>
@@ -100,6 +185,12 @@ export default function DriverManagement() {
                     </button>
                 )}
             </div>
+
+            {error && (
+                <div className="alert alert-danger d-flex align-items-center gap-2" role="alert">
+                    <i className="bi bi-exclamation-triangle"></i> {error}
+                </div>
+            )}
 
             {/* KPIs */}
             <div className="row g-3 mb-3">
@@ -148,7 +239,7 @@ export default function DriverManagement() {
                     </div>
                     <div style={{ minWidth: 180 }}>
                         <Select
-                        instanceId="driver-status-select"
+                            instanceId="driver-status-select"
                             classNamePrefix="react-select"
                             options={statusOptions}
                             value={status}
@@ -158,7 +249,7 @@ export default function DriverManagement() {
                                 container: (base) => ({ ...base, width: "100%", minWidth: 220 }),
                                 control: (base) => ({ ...base, minHeight: 42, borderRadius: "0.7rem" }),
                                 menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                            }} 
+                            }}
                             menuPortalTarget={typeof window !== "undefined" ? document.body : null}
                             menuPosition="fixed"
                             menuShouldScrollIntoView={false}
@@ -169,28 +260,31 @@ export default function DriverManagement() {
 
             {/* Views */}
             {mode === "list" && (
-                <div className="row g-3">
-                    {filtered.map((d) => (
-                        <div className="col-lg-6" key={d.id}>
-                            <DriverCard
-                                driver={d}
-                                onView={() => openView(d)}
-                                onAssign={() =>
-                                    alert(`Assign bus functionality for ${d.name} would be implemented here`)
-                                }
-                                onEdit={() => openEdit(d)}
-                            />
-                        </div>
-                    ))}
-                </div>
+                <>
+                    {loading && <div className="text-center my-3">Loading drivers...</div>}
+                    <div className="row g-3">
+                        {filtered.map((d) => (
+                            <div className="col-lg-6" key={d.id  ?? d.uuid ?? `${d.license}-${d.phone}`}>
+                                <DriverCard
+                                    driver={d}
+                                    onView={() => openView(d)}
+                                    onAssign={() => alert(`Assign bus functionality for ${d.name} would be implemented here`)}
+                                    onEdit={() => openEdit(d)}
+                                    onDelete={()=>onDelete(d)}
+                                />
+                            </div>
+                        ))}
+                    </div>
+                </>
             )}
 
             {mode === "create" && (
                 <DriverForm
                     title="Add New Driver"
-                    submitText="Add Driver"
+                    submitText={loading ? "Adding..." : "Add Driver"}
                     onCancel={() => setMode("list")}
-                    onSubmit={(data) => onCreate(data)}
+                    onSubmit={onCreate}
+                    mode={mode}
                 />
             )}
 
@@ -201,6 +295,7 @@ export default function DriverManagement() {
                     submitText="Update Driver"
                     onCancel={() => setMode("list")}
                     onSubmit={(data) => onUpdate({ ...current, ...data })}
+                    mode={mode}
                 />
             )}
 

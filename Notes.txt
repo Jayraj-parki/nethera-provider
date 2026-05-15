@@ -1,0 +1,61 @@
+Access API at: http://localhost:8000/
+Access Django admin at: http://localhost:8000/admin/
+
+
+Requiremnt : 
+0. share username and email id in reponse for login api
+1. add api for ameneties : optional 
+2. update Id to hash value : uuid()
+3. Seat Layout : UI + BACKEND
+4. instead of seats write seat_set in busManagement and remove read_only=true
+5. add agent seat in busManagement :: TBD
+6. in getBuses add driver name instead of bus Id
+    driver : 5: Jayraj
+    Bus
+        bus details : drivername : 5
+
+7. validation on Seat count (check for realistic count)
+8. validation on mandatory fields
+
+sleeper: 10 row + 3 column
+
+Bus : 
+    add bus
+    update bus
+    delete bus
+
+route
+    route name
+    no of stop
+
+    crud operation
+
+driver
+    crud operation
+
+
+
+bus :
+    route
+    driver
+
+
+
+Trip : bus --> route 
+UI : trip new UI
+UI : Bus add 2 api call:: bus add karne and trip 
+
+
+
+UI Bus add ---> route
+new bus --> route 
+
+
+route--> mumbai - delhi
+route2--> banghlore - delhi
+new
+route : route--> banghlore - delhi
+
+new :
+route--> mumbai - delhi
+

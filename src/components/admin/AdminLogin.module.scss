@@ -1,0 +1,46 @@
+.Adminwrapper {
+    background: #f5f7fb;
+
+
+    .card {
+        border-radius: 16px;
+        border: none;
+    }
+
+    .title {
+        font-weight: 600;
+        color: #333;
+    }
+
+    .loginBtn {
+        background: linear-gradient(135deg, #6a11cb, #2575fc);
+        border: none;
+        color: white;
+        font-weight: 500;
+        padding: 10px;
+        border-radius: 8px;
+        transition: 0.3s;
+    }
+
+    .loginBtn:hover {
+        opacity: 0.9;
+    }
+
+    input.form-control {
+        border-radius: 8px;
+        padding: 10px;
+    }
+
+    input.form-control:focus {
+        box-shadow: none;
+        border-color: #6a11cb;
+    }
+
+}
+
+.AdminSidebar {
+    ul>li>button {
+        font-size:12px ;
+        margin-bottom: 2px;
+    }
+}

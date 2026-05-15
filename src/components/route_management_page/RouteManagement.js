@@ -1,30 +1,128 @@
+// components/operator/routes/RouteManagement.jsx
 "use client";
+
 import styles from "./route.module.scss";
-import { useState } from "react";
-import RouteSummary from "./RouteSummary.js";
-import RouteEditForm from "./RouteEditForm.js";
-import RouteCreateForm from "./RouteCreateForm.js";
+import { useEffect, useMemo, useState } from "react";
+import RouteSummary from "./RouteSummary";
+import RouteEditForm from "./RouteEditForm";
+import RouteCreateForm from "./RouteCreateForm";
 
-
-const mockRoute = {
-  id: 1,
-  name: "Mumbai–Delhi Express",
-  source: "Mumbai",
-  destination: "Delhi",
-  totalDistanceKm: 1400,
-  durationText: "20h 0m",
-  stops: [
-    { name: "Mumbai", arrival: "00:00", departure: "10:30", distanceKm: 0, tag: "Start" },
-    { name: "Pune", arrival: "13:30", departure: "13:45", distanceKm: 150 },
-    { name: "Nashik", arrival: "15:30", departure: "15:45", distanceKm: 210 },
-    { name: "Indore", arrival: "22:30", departure: "22:45", distanceKm: 590 },
-    { name: "Delhi", arrival: "06:30", departure: "06:30", distanceKm: 1400, tag: "End" },
-  ],
-};
+import { apiToUiRoute, uiToApiRoute } from "@/utils/routesMap";
+import { useDispatch, useSelector } from "react-redux";
+import { getRoute } from "@/services/routeService";
+import { addRoute, editRoute, fetchRouteById, fetchRoutes, removeRoute } from "@/store/busSlice";
+import { selectRoutes } from "@/store/selectors/busSelector";
 
 export default function RouteManagement() {
-  const [mode, setMode] = useState("display"); // "display" | "edit" | "create"
-  const route = mockRoute;
+  const route_list = useSelector(selectRoutes);
+  const [mode, setMode] = useState("display"); // display | edit | create
+  const [routes, setRoutes] = useState(route_list || []);
+  const [current, setCurrent] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [err, setErr] = useState("");
+  const dispatch = useDispatch();
+  const tagStops = (r) => ({
+    ...r,
+    stops: (r.stops || []).map((s, idx, arr) => ({
+      ...s,
+      tag: idx === 0 ? "Start" : idx === arr.length - 1 ? "End" : s.tag || "",
+    })),
+  });
+
+  // Load list
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        setErr("");
+        const data = await dispatch(fetchRoutes()).unwrap();
+        const list = Array.isArray(data) ? data : data?.results || [];
+        const uiList = list.map((r) => tagStops(apiToUiRoute(r)));
+        setRoutes(uiList);
+        setCurrent(uiList[0] || null);
+      } catch (e) {
+        setErr(e?.message || "Failed to load routes");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const kpis = useMemo(() => {
+    const total = routes.length;
+    const totalDistanceKm = routes.reduce((a, r) => a + (Number(r.totalDistanceKm) || 0), 0);
+    return { total, totalDistanceKm };
+  }, [routes]);
+
+  // Open a specific route in edit
+  const openEdit = async (routeRow) => {
+    try {
+      setLoading(true);
+      setErr("");
+      const api = await dispatch(fetchRouteById(routeRow.id)).unwrap();
+      const ui = tagStops(apiToUiRoute(api));
+      setCurrent(ui);
+      setMode("edit");
+    } catch (e) {
+      setErr(e?.message || "Failed to load route");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create
+  const handleCreate = async (uiForm) => {
+    try {
+      setLoading(true);
+      setErr("");
+      const payload = uiToApiRoute(uiForm);
+      const created = await dispatch(addRoute(payload)).unwrap();
+      const uiCreated = tagStops(apiToUiRoute(created));
+      setRoutes((prev) => [uiCreated, ...prev]);
+      setCurrent(uiCreated);
+      setMode("display");
+    } catch (e) {
+      setErr(e?.message || "Failed to create route");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Save current (PATCH)
+  const handleSave = async (uiForm) => {
+    try {
+      if (!current?.id) return;
+      setLoading(true);
+      setErr("");
+      const payload = uiToApiRoute(uiForm);
+      const updated = await dispatch(editRoute({ id: current.id, payload })).unwrap();
+      const uiUpdated = tagStops(apiToUiRoute(updated));
+      setRoutes((prev) => prev.map((r) => (r.id === current.id ? uiUpdated : r)));
+      setCurrent(uiUpdated);
+      setMode("display");
+    } catch (e) {
+      setErr(e?.message || "Failed to update route");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete specific
+  const handleDeleteSpecific = async (id) => {
+    try {
+      setLoading(true);
+      setErr("");
+      await dispatch(removeRoute(id)).unwrap();
+      const next = routes.filter((r) => r.id !== id);
+      setRoutes(next);
+      if (current?.id === id) setCurrent(next[0] || null);
+      setMode("display");
+    } catch (e) {
+      setErr(e?.message || "Failed to delete route");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const StatCard = ({ icon, label, value, tone }) => (
     <div className="col-lg-4 col-md-6">
@@ -40,56 +138,43 @@ export default function RouteManagement() {
 
   return (
     <div className="container py-4">
-      {/* Header row */}
       <div className="d-flex align-items-center justify-content-between mb-3">
         <div>
           <h4 className="mb-1">Route Management</h4>
           <div className="text-muted">Manage bus routes and stops</div>
+          {err && <div className="text-danger small mt-1">{err}</div>}
         </div>
-        <button
-          className="btn btn-primary d-flex align-items-center gap-2"
-          onClick={() => setMode("create")}
-        >
+        <button className="btn btn-primary d-flex align-items-center gap-2" onClick={() => setMode("create")}>
           <i className="bi bi-plus-lg" /> Add New Route
         </button>
       </div>
 
-      {/* Stats */}
       <div className="row g-3 mb-4">
-        <StatCard icon="bi-diagram-3" label="Total Routes" value="1" />
-        <StatCard icon="bi-geo-alt" label="Total Distance" value={`${route.totalDistanceKm} km`} />
-        <StatCard icon="bi-clock-history" label="Average Distance" value={`${route.totalDistanceKm} km`} tone="text-pink" />
+        <StatCard icon="bi-diagram-3" label="Total Routes" value={kpis.total} />
+        <StatCard icon="bi-geo-alt" label="Total Distance" value={`${kpis.totalDistanceKm} km`} />
+        <StatCard icon="bi-clock-history" label="Average Distance" value={`${kpis.totalDistanceKm} km`} tone="text-pink" />
       </div>
 
-      {/* Body by mode */}
+      {loading && <div className="my-2">Loading...</div>}
+
       {mode === "display" && (
-        <RouteSummary
-          route={route}
-          onEdit={() => setMode("edit")}
-          onDelete={() => alert("Delete route (UI only)")}
-        />
+        <div className="d-flex flex-column gap-3">
+          {routes.map((r) => (
+            <RouteSummary
+              key={r.id}              // keep stable id as key
+              route={r}
+              onEdit={() => openEdit(r)}
+              onDelete={() => handleDeleteSpecific(r.id)}
+            />
+          ))}
+        </div>
       )}
 
-      {mode === "edit" && (
-        <RouteEditForm
-          initial={route}
-          onCancel={() => setMode("display")}
-          onSave={(data) => {
-            console.log("Update route", data);
-            setMode("display");
-          }}
-        />
+      {mode === "edit" && current && (
+        <RouteEditForm initial={current} onCancel={() => setMode("display")} onSave={handleSave} />
       )}
 
-      {mode === "create" && (
-        <RouteCreateForm
-          onCancel={() => setMode("display")}
-          onCreate={(data) => {
-            console.log("Create route", data);
-            setMode("display");
-          }}
-        />
-      )}
+      {mode === "create" && <RouteCreateForm onCancel={() => setMode("display")} onCreate={handleCreate} />}
     </div>
   );
 }

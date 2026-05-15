@@ -2,19 +2,24 @@
 import { nav_links } from "@/utils/constants";
 import style from "./operatorDashboard.module.scss";
 import Link from "next/link";
+import { selectActiveBuses, selectActiveDrivers, selectRoutes } from "@/store/selectors/busSelector";
+import { useSelector } from "react-redux";
 
 export default function OperatorDashboard() {
+    const buses = useSelector(selectActiveBuses);
+    const drivers = useSelector(selectActiveDrivers);
+    const routes = useSelector(selectRoutes);
     const operations = [{
         "title": "Active Buses",
-        "count": "1",
+        "count": buses?.length || 0,
         "icon": "bi bi-bus-front text-primary"
     }, {
         "title": "Active Drivers",
-        "count": "2",
+        "count": drivers?.length || 0,
         "icon": "bi bi-people text-info"
     }, {
         "title": "Routes",
-        "count": "2",
+        "count": routes?.length || 0,
         "icon": "bi bi-diagram-3 text-pink"
     }, {
         "title": "Occupancy Rate",
